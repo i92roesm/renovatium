@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Refrescador de URL</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            font-size: 2.5em;
+			font-family: Verdana;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        input[type="url"], input[type="number"] {
+            width: 100%;
+            max-width: 400px;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            max-width: 150px;
+            margin-bottom: 0;
+        }
+
+        .input-group label {
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .presets {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .preset-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .preset-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        button:disabled {
+            background: rgba(255, 255, 255, 0.3);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .stop-btn {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+        }
+
+        .status-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            display: none;
+        }
+
+        .timer-display {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            border-radius: 10px;
+            transition: width 1s ease;
+            width: 0%;
+        }
+
+        .current-url {
+            word-break: break-all;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-family: monospace;
+        }
+
+        .info {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-top: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4CAF50;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .window-status {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .settings-summary {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+		
+		.copyright {
+			margin: 12px;
+			padding: 4px;
+            font-size: 1.1em;
+			font-family: Verdana;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+			color: yellow;
+		}
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 RENOVATIUM </h1>
+		<h2> Un auto refréscame el curso </h2> 
+		<div class="copyright">
+			<p> © elmo software 2025 </p>
+		</div>
+        
+        <div class="input-section" id="inputSection">
+            <div class="warning">
+                ⚠️ <strong>Importante:</strong> Asegúrate de permitir pop-ups en tu navegador para que funcione correctamente.
+            </div>
+            
+            <input type="url" id="urlInput" placeholder="https://ejemplo.com" required>
+            
+            <div class="input-group">
+                <label for="minutesInput">⏱️ Refrescar cada:</label>
+                <input type="number" id="minutesInput" min="1" max="1440" value="20" placeholder="20">
+                <label>minutos</label>
+            </div>
+            
+            <div class="presets">
+                <span style="opacity: 0.8; font-size: 14px; margin-right: 10px;">Intervalos comunes:</span>
+                <button type="button" class="preset-btn" onclick="setMinutes(1)">1 min</button>
+                <button type="button" class="preset-btn" onclick="setMinutes(5)">5 min</button>
+                <button type="button" class="preset-btn" onclick="setMinutes(10)">10 min</button>
+                <button type="button" class="preset-btn" onclick="setMinutes(15)">15 min</button>
+                <button type="button" class="preset-btn" onclick="setMinutes(20)">20 min</button>
+                <button type="button" class="preset-btn" onclick="setMinutes(30)">30 min</button>
+                <button type="button" class="preset-btn" onclick="setMinutes(60)">1 hora</button>
+            </div>
+            
+            <button onclick="startAutoRefresh()" id="startBtn">🚀 Comenzar Auto-Refresco</button>
+            
+            <div class="info">
+                Configura la URL y el intervalo de tiempo deseado
+            </div>
+        </div>
+
+        <div class="status-section" id="statusSection">
+            <h3><span class="status-indicator"></span>Auto-Refrescador Activo</h3>
+            
+            <div class="settings-summary" id="settingsSummary">
+                <!-- Se llenará dinámicamente -->
+            </div>
+            
+            <div class="current-url" id="currentUrl"></div>
+            
+            <div class="window-status" id="windowStatus">
+                Estado de la ventana: <span id="windowStatusText">Iniciando...</span>
+            </div>
+            
+            <div class="timer-display" id="timerDisplay">--:--</div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            
+            <button onclick="pauseAutoRefresh()" id="pauseBtn">⏸️ Pausar</button>
+            <button onclick="resumeAutoRefresh()" id="resumeBtn" class="hidden">▶️ Reanudar</button>
+            <button onclick="stopAutoRefresh()" class="stop-btn">⏹️ Detener</button>
+            <button onclick="refreshNow()">🔄 Refrescar Ahora</button>
+            <button onclick="openNewWindow()">🆕 Abrir Nueva Ventana</button>
+			
+        
+    </div>
+
+    <script>
+        let refreshInterval;
+        let countdownInterval;
+        let statusCheckInterval;
+        let timeRemaining = 1200; // Se actualizará según la entrada del usuario
+        let totalTime = 1200;
+        let isPaused = false;
+        let currentUrl = '';
+        let targetWindow = null;
+
+        function setMinutes(minutes) {
+            document.getElementById('minutesInput').value = minutes;
+        }
+
+        function startAutoRefresh() {
+            const urlInput = document.getElementById('urlInput');
+            const minutesInput = document.getElementById('minutesInput');
+            const url = urlInput.value.trim();
+            const minutes = parseInt(minutesInput.value);
+            
+            // Validar URL
+            if (!url) {
+                alert('Por favor, ingresa una URL válida');
+                return;
+            }
+            
+            try {
+                new URL(url);
+            } catch (e) {
+                alert('Por favor, ingresa una URL válida (debe incluir http:// o https://)');
+                return;
+            }
+            
+            // Validar minutos
+            if (!minutes || minutes < 1 || minutes > 1440) {
+                alert('Por favor, ingresa un número válido de minutos (entre 1 y 1440)');
+                return;
+            }
+            
+            // Configurar variables globales
+            currentUrl = url;
+            totalTime = minutes * 60; // Convertir a segundos
+            timeRemaining = totalTime;
+            
+            // Abrir la ventana
+            if (!openNewWindow()) {
+                return; // Si no se pudo abrir la ventana, no continuar
+            }
+            
+            // Mostrar sección de estado
+            document.getElementById('inputSection').style.display = 'none';
+            document.getElementById('statusSection').style.display = 'block';
+            document.getElementById('currentUrl').textContent = url;
+            
+            // Mostrar resumen de configuración
+            const settingsSummary = document.getElementById('settingsSummary');
+            settingsSummary.innerHTML = `
+                📊 <strong>Configuración:</strong><br>
+                🔄 Intervalo: ${minutes} minuto${minutes > 1 ? 's' : ''}<br>
+                🌐 URL: ${url.length > 50 ? url.substring(0, 50) + '...' : url}
+            `;
+            
+            // Iniciar el auto-refresco
+            startTimer();
+            startStatusCheck();
+        }
+        
+        function openNewWindow() {
+            console.log('Abriendo ventana para:', currentUrl);
+            
+            // Cerrar ventana anterior si existe
+            if (targetWindow && !targetWindow.closed) {
+                try {
+                    targetWindow.close();
+                } catch (e) {
+                    console.log('No se pudo cerrar ventana anterior');
+                }
+            }
+            
+            // Abrir nueva ventana
+            targetWindow = window.open(currentUrl, 'autoRefreshWindow_' + Date.now(), 'width=1024,height=768,scrollbars=yes,resizable=yes,location=yes,menubar=yes,toolbar=yes');
+            
+            if (!targetWindow) {
+                alert('❌ No se pudo abrir la ventana. Por favor:\n\n1. Permite pop-ups en tu navegador\n2. Inténtalo de nuevo');
+                updateWindowStatus('Error: Pop-ups bloqueados ❌');
+                return false;
+            }
+            
+            updateWindowStatus('Ventana abierta correctamente ✅');
+            return true;
+        }
+        
+        function startTimer() {
+            // Limpiar intervalos existentes
+            if (refreshInterval) clearInterval(refreshInterval);
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            timeRemaining = totalTime;
+            isPaused = false;
+            
+            // Actualizar botones
+            document.getElementById('pauseBtn').classList.remove('hidden');
+            document.getElementById('resumeBtn').classList.add('hidden');
+            
+            // Intervalo para refrescar la página
+            refreshInterval = setInterval(() => {
+                if (!isPaused) {
+                    refreshNow();
+                }
+            }, totalTime * 1000);
+            
+            // Intervalo para actualizar el contador
+            countdownInterval = setInterval(() => {
+                if (!isPaused) {
+                    if (timeRemaining > 0) {
+                        timeRemaining--;
+                    } else {
+                        timeRemaining = totalTime; // Reiniciar cuando llegue a 0
+                    }
+                    updateDisplay();
+                }
+            }, 1000);
+            
+            // Actualizar display inmediatamente
+            updateDisplay();
+        }
+        
+        function startStatusCheck() {
+            if (statusCheckInterval) clearInterval(statusCheckInterval);
+            
+            statusCheckInterval = setInterval(() => {
+                if (targetWindow) {
+                    try {
+                        if (targetWindow.closed) {
+                            updateWindowStatus('Ventana cerrada ⚠️');
+                        } else {
+                            updateWindowStatus('Ventana activa ✅');
+                        }
+                    } catch (error) {
+                        updateWindowStatus('Estado de ventana desconocido ⚠️');
+                    }
+                } else {
+                    updateWindowStatus('No hay ventana activa ❌');
+                }
+            }, 3000); // Verificar cada 3 segundos
+        }
+        
+        function updateDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const displayTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            const timerElement = document.getElementById('timerDisplay');
+            if (timerElement) {
+                timerElement.textContent = displayTime;
+            }
+            
+            // Actualizar barra de progreso
+            const progress = ((totalTime - timeRemaining) / totalTime) * 100;
+            const progressElement = document.getElementById('progressFill');
+            if (progressElement) {
+                progressElement.style.width = `${progress}%`;
+            }
+        }
+        
+        function updateWindowStatus(status) {
+            document.getElementById('windowStatusText').textContent = status;
+        }
+        
+        function pauseAutoRefresh() {
+            isPaused = true;
+            document.getElementById('pauseBtn').classList.add('hidden');
+            document.getElementById('resumeBtn').classList.remove('hidden');
+        }
+        
+        function resumeAutoRefresh() {
+            isPaused = false;
+            document.getElementById('pauseBtn').classList.remove('hidden');
+            document.getElementById('resumeBtn').classList.add('hidden');
+        }
+        
+        function refreshNow() {
+            console.log('Intentando refrescar...', targetWindow);
+            
+            if (targetWindow) {
+                try {
+                    // Verificar si la ventana está cerrada
+                    if (targetWindow.closed) {
+                        updateWindowStatus('Ventana cerrada - Abriendo nueva... 🔄');
+                        if (openNewWindow()) {
+                            // Esperar un momento y luego refrescar
+                            setTimeout(() => {
+                                if (targetWindow && !targetWindow.closed) {
+                                    targetWindow.location.reload();
+                                }
+                            }, 1000);
+                        }
+                        return;
+                    }
+                    
+                    // Intentar refrescar la ventana existente
+                    targetWindow.location.reload();
+                    timeRemaining = totalTime;
+                    updateDisplay();
+                    updateWindowStatus('Página refrescada manualmente ✅');
+                    
+                } catch (error) {
+                    console.log('Error al refrescar:', error);
+                    // Si hay error de CORS, intentar navegar de nuevo
+                    try {
+                        targetWindow.location.href = currentUrl + '?t=' + Date.now();
+                        timeRemaining = totalTime;
+                        updateDisplay();
+                        updateWindowStatus('Página recargada (método alternativo) ✅');
+                    } catch (error2) {
+                        console.log('Error secundario:', error2);
+                        updateWindowStatus('Error al refrescar - Abriendo nueva ventana... 🔄');
+                        openNewWindow();
+                    }
+                }
+            } else {
+                // No hay ventana, abrir una nueva
+                updateWindowStatus('Abriendo nueva ventana... 🔄');
+                if (openNewWindow()) {
+                    updateWindowStatus('Nueva ventana abierta ✅');
+                } else {
+                    updateWindowStatus('Error: No se pudo abrir ventana ❌');
+                }
+            }
+        }
+        
+        function stopAutoRefresh() {
+            // Limpiar intervalos
+            if (refreshInterval) clearInterval(refreshInterval);
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (statusCheckInterval) clearInterval(statusCheckInterval);
+            
+            // Cerrar ventana si está abierta
+            if (targetWindow && !targetWindow.closed) {
+                targetWindow.close();
+            }
+            
+            // Volver a la pantalla inicial
+            document.getElementById('inputSection').style.display = 'block';
+            document.getElementById('statusSection').style.display = 'none';
+            
+            // Limpiar estado
+            timeRemaining = totalTime;
+            isPaused = false;
+            targetWindow = null;
+        }
+    </script>
+</body>
+</html>
