@@ -25,7 +25,7 @@
             padding: 40px;
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
             border: 1px solid rgba(255, 255, 255, 0.18);
-            max-width: 600px;
+            max-width: 650px;
             width: 100%;
             text-align: center;
         }
@@ -33,7 +33,6 @@
         h1 {
             margin-bottom: 30px;
             font-size: 2.5em;
-			font-family: Verdana;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
@@ -131,6 +130,39 @@
             background: linear-gradient(45deg, #f44336, #d32f2f);
         }
 
+        .human-btn {
+            background: linear-gradient(45deg, #ff9800, #f57c00);
+            font-size: 14px;
+            padding: 10px 20px;
+        }
+
+        .human-mode {
+            background: rgba(255, 152, 0, 0.2);
+            border: 2px solid #ff9800;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .human-mode.active {
+            display: block;
+        }
+
+        .range-inputs {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .range-inputs input {
+            max-width: 100px;
+            margin-bottom: 0;
+        }
+
         .status-section {
             margin-top: 30px;
             padding: 20px;
@@ -164,6 +196,10 @@
             width: 0%;
         }
 
+        .progress-fill.human {
+            background: linear-gradient(90deg, #ff9800, #f57c00);
+        }
+
         .current-url {
             word-break: break-all;
             background: rgba(0,0,0,0.2);
@@ -193,6 +229,10 @@
             animation: pulse 2s infinite;
         }
 
+        .status-indicator.human {
+            background: #ff9800;
+        }
+
         .window-status {
             background: rgba(0,0,0,0.2);
             padding: 15px;
@@ -216,15 +256,15 @@
             margin: 15px 0;
             font-weight: bold;
         }
-		
-		.copyright {
-			margin: 12px;
-			padding: 4px;
-            font-size: 1.1em;
-			font-family: Verdana;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-			color: yellow;
-		}
+
+        .human-indicator {
+            background: rgba(255, 152, 0, 0.3);
+            border: 2px solid #ff9800;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
 
         @keyframes pulse {
             0% { opacity: 1; }
@@ -235,11 +275,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔄 RENOVATIUM </h1>
-		<h2> Un auto refréscame el curso </h2> 
-		<div class="copyright">
-			<p> © elmo software 2025 </p>
-		</div>
+        <h1>🔄 Auto-Refrescador de URL</h1>
         
         <div class="input-section" id="inputSection">
             <div class="warning">
@@ -264,6 +300,28 @@
                 <button type="button" class="preset-btn" onclick="setMinutes(30)">30 min</button>
                 <button type="button" class="preset-btn" onclick="setMinutes(60)">1 hora</button>
             </div>
+
+            <button type="button" class="human-btn" onclick="toggleHumanMode()">
+                🤖➡️👤 Voy a ser más humano
+            </button>
+
+            <div class="human-mode" id="humanMode">
+                <h3 style="margin-top: 0;">🎲 Modo Aleatorio (Más Humano)</h3>
+                <p style="font-size: 14px; opacity: 0.9;">
+                    El refresco será aleatorio entre dos intervalos para simular comportamiento humano
+                </p>
+                <div class="range-inputs">
+                    <label>Mínimo:</label>
+                    <input type="number" id="minMinutes" min="1" max="1440" value="3" placeholder="3">
+                    <label>minutos</label>
+                    <label style="margin-left: 10px;">➡️ Máximo:</label>
+                    <input type="number" id="maxMinutes" min="1" max="1440" value="20" placeholder="20">
+                    <label>minutos</label>
+                </div>
+                <div style="font-size: 13px; opacity: 0.8; margin-top: 10px;">
+                    Ejemplo: Entre 3 y 20 minutos = refrescará en 7 min, luego 15 min, luego 4 min, etc.
+                </div>
+            </div>
             
             <button onclick="startAutoRefresh()" id="startBtn">🚀 Comenzar Auto-Refresco</button>
             
@@ -273,10 +331,17 @@
         </div>
 
         <div class="status-section" id="statusSection">
-            <h3><span class="status-indicator"></span>Auto-Refrescador Activo</h3>
+            <h3>
+                <span class="status-indicator" id="statusIndicator"></span>
+                <span id="modeTitle">Auto-Refrescador Activo</span>
+            </h3>
             
             <div class="settings-summary" id="settingsSummary">
                 <!-- Se llenará dinámicamente -->
+            </div>
+
+            <div class="human-indicator hidden" id="humanIndicator">
+                🎲 Próximo refresco en: <strong id="nextRefreshTime">--</strong> minutos (aleatorio)
             </div>
             
             <div class="current-url" id="currentUrl"></div>
@@ -296,29 +361,56 @@
             <button onclick="stopAutoRefresh()" class="stop-btn">⏹️ Detener</button>
             <button onclick="refreshNow()">🔄 Refrescar Ahora</button>
             <button onclick="openNewWindow()">🆕 Abrir Nueva Ventana</button>
-			
-        
+        </div>
     </div>
 
     <script>
         let refreshInterval;
         let countdownInterval;
         let statusCheckInterval;
-        let timeRemaining = 1200; // Se actualizará según la entrada del usuario
+        let timeRemaining = 1200;
         let totalTime = 1200;
         let isPaused = false;
         let currentUrl = '';
         let targetWindow = null;
+        let humanMode = false;
+        let minMinutes = 3;
+        let maxMinutes = 20;
+        let nextRandomTime = 0;
+
+        function toggleHumanMode() {
+            humanMode = !humanMode;
+            const humanModeDiv = document.getElementById('humanMode');
+            const regularInput = document.getElementById('minutesInput').parentElement;
+            const presetsDiv = document.querySelector('.presets');
+            const btn = event.target;
+
+            if (humanMode) {
+                humanModeDiv.classList.add('active');
+                regularInput.style.display = 'none';
+                presetsDiv.style.display = 'none';
+                btn.textContent = '⏱️ Volver a modo normal';
+                btn.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
+            } else {
+                humanModeDiv.classList.remove('active');
+                regularInput.style.display = 'flex';
+                presetsDiv.style.display = 'flex';
+                btn.textContent = '🤖➡️👤 Voy a ser más humano';
+                btn.style.background = 'linear-gradient(45deg, #ff9800, #f57c00)';
+            }
+        }
 
         function setMinutes(minutes) {
             document.getElementById('minutesInput').value = minutes;
         }
 
+        function getRandomMinutes(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
         function startAutoRefresh() {
             const urlInput = document.getElementById('urlInput');
-            const minutesInput = document.getElementById('minutesInput');
             const url = urlInput.value.trim();
-            const minutes = parseInt(minutesInput.value);
             
             // Validar URL
             if (!url) {
@@ -333,20 +425,44 @@
                 return;
             }
             
-            // Validar minutos
-            if (!minutes || minutes < 1 || minutes > 1440) {
-                alert('Por favor, ingresa un número válido de minutos (entre 1 y 1440)');
-                return;
+            // Validar según el modo
+            if (humanMode) {
+                const minInput = parseInt(document.getElementById('minMinutes').value);
+                const maxInput = parseInt(document.getElementById('maxMinutes').value);
+                
+                if (!minInput || !maxInput || minInput < 1 || maxInput < 1) {
+                    alert('Por favor, ingresa valores válidos para el intervalo aleatorio (mínimo 1 minuto)');
+                    return;
+                }
+                
+                if (minInput >= maxInput) {
+                    alert('❌ Error: El valor mínimo debe ser menor que el valor máximo\n\nEjemplo: Mínimo 3 min, Máximo 20 min');
+                    return;
+                }
+                
+                minMinutes = minInput;
+                maxMinutes = maxInput;
+                nextRandomTime = getRandomMinutes(minMinutes, maxMinutes);
+                totalTime = nextRandomTime * 60;
+                timeRemaining = totalTime;
+            } else {
+                const minutes = parseInt(document.getElementById('minutesInput').value);
+                
+                if (!minutes || minutes < 1 || minutes > 1440) {
+                    alert('Por favor, ingresa un número válido de minutos (entre 1 y 1440)');
+                    return;
+                }
+                
+                totalTime = minutes * 60;
+                timeRemaining = totalTime;
             }
             
             // Configurar variables globales
             currentUrl = url;
-            totalTime = minutes * 60; // Convertir a segundos
-            timeRemaining = totalTime;
             
             // Abrir la ventana
             if (!openNewWindow()) {
-                return; // Si no se pudo abrir la ventana, no continuar
+                return;
             }
             
             // Mostrar sección de estado
@@ -354,13 +470,42 @@
             document.getElementById('statusSection').style.display = 'block';
             document.getElementById('currentUrl').textContent = url;
             
+            // Configurar UI según el modo
+            const statusIndicator = document.getElementById('statusIndicator');
+            const progressFill = document.getElementById('progressFill');
+            const modeTitle = document.getElementById('modeTitle');
+            const humanIndicator = document.getElementById('humanIndicator');
+            
+            if (humanMode) {
+                statusIndicator.classList.add('human');
+                progressFill.classList.add('human');
+                modeTitle.textContent = 'Modo Humano Activo 👤';
+                humanIndicator.classList.remove('hidden');
+                document.getElementById('nextRefreshTime').textContent = nextRandomTime;
+            } else {
+                statusIndicator.classList.remove('human');
+                progressFill.classList.remove('human');
+                modeTitle.textContent = 'Auto-Refrescador Activo';
+                humanIndicator.classList.add('hidden');
+            }
+            
             // Mostrar resumen de configuración
             const settingsSummary = document.getElementById('settingsSummary');
-            settingsSummary.innerHTML = `
-                📊 <strong>Configuración:</strong><br>
-                🔄 Intervalo: ${minutes} minuto${minutes > 1 ? 's' : ''}<br>
-                🌐 URL: ${url.length > 50 ? url.substring(0, 50) + '...' : url}
-            `;
+            if (humanMode) {
+                settingsSummary.innerHTML = `
+                    📊 <strong>Configuración (Modo Humano):</strong><br>
+                    🎲 Intervalo Aleatorio: ${minMinutes} - ${maxMinutes} minutos<br>
+                    🔄 Próximo refresco: ${nextRandomTime} minutos<br>
+                    🌐 URL: ${url.length > 50 ? url.substring(0, 50) + '...' : url}
+                `;
+            } else {
+                const minutes = Math.floor(totalTime / 60);
+                settingsSummary.innerHTML = `
+                    📊 <strong>Configuración:</strong><br>
+                    🔄 Intervalo: ${minutes} minuto${minutes > 1 ? 's' : ''}<br>
+                    🌐 URL: ${url.length > 50 ? url.substring(0, 50) + '...' : url}
+                `;
+            }
             
             // Iniciar el auto-refresco
             startTimer();
@@ -370,7 +515,6 @@
         function openNewWindow() {
             console.log('Abriendo ventana para:', currentUrl);
             
-            // Cerrar ventana anterior si existe
             if (targetWindow && !targetWindow.closed) {
                 try {
                     targetWindow.close();
@@ -379,7 +523,6 @@
                 }
             }
             
-            // Abrir nueva ventana
             targetWindow = window.open(currentUrl, 'autoRefreshWindow_' + Date.now(), 'width=1024,height=768,scrollbars=yes,resizable=yes,location=yes,menubar=yes,toolbar=yes');
             
             if (!targetWindow) {
@@ -393,37 +536,49 @@
         }
         
         function startTimer() {
-            // Limpiar intervalos existentes
             if (refreshInterval) clearInterval(refreshInterval);
             if (countdownInterval) clearInterval(countdownInterval);
             
             timeRemaining = totalTime;
             isPaused = false;
             
-            // Actualizar botones
             document.getElementById('pauseBtn').classList.remove('hidden');
             document.getElementById('resumeBtn').classList.add('hidden');
             
-            // Intervalo para refrescar la página
             refreshInterval = setInterval(() => {
                 if (!isPaused) {
                     refreshNow();
+                    
+                    // Si estamos en modo humano, calcular nuevo tiempo aleatorio
+                    if (humanMode) {
+                        nextRandomTime = getRandomMinutes(minMinutes, maxMinutes);
+                        totalTime = nextRandomTime * 60;
+                        timeRemaining = totalTime;
+                        document.getElementById('nextRefreshTime').textContent = nextRandomTime;
+                        
+                        // Actualizar el resumen
+                        const settingsSummary = document.getElementById('settingsSummary');
+                        settingsSummary.innerHTML = `
+                            📊 <strong>Configuración (Modo Humano):</strong><br>
+                            🎲 Intervalo Aleatorio: ${minMinutes} - ${maxMinutes} minutos<br>
+                            🔄 Próximo refresco: ${nextRandomTime} minutos<br>
+                            🌐 URL: ${currentUrl.length > 50 ? currentUrl.substring(0, 50) + '...' : currentUrl}
+                        `;
+                    }
                 }
             }, totalTime * 1000);
             
-            // Intervalo para actualizar el contador
             countdownInterval = setInterval(() => {
                 if (!isPaused) {
                     if (timeRemaining > 0) {
                         timeRemaining--;
                     } else {
-                        timeRemaining = totalTime; // Reiniciar cuando llegue a 0
+                        timeRemaining = totalTime;
                     }
                     updateDisplay();
                 }
             }, 1000);
             
-            // Actualizar display inmediatamente
             updateDisplay();
         }
         
@@ -444,7 +599,7 @@
                 } else {
                     updateWindowStatus('No hay ventana activa ❌');
                 }
-            }, 3000); // Verificar cada 3 segundos
+            }, 3000);
         }
         
         function updateDisplay() {
@@ -457,7 +612,6 @@
                 timerElement.textContent = displayTime;
             }
             
-            // Actualizar barra de progreso
             const progress = ((totalTime - timeRemaining) / totalTime) * 100;
             const progressElement = document.getElementById('progressFill');
             if (progressElement) {
@@ -486,11 +640,9 @@
             
             if (targetWindow) {
                 try {
-                    // Verificar si la ventana está cerrada
                     if (targetWindow.closed) {
                         updateWindowStatus('Ventana cerrada - Abriendo nueva... 🔄');
                         if (openNewWindow()) {
-                            // Esperar un momento y luego refrescar
                             setTimeout(() => {
                                 if (targetWindow && !targetWindow.closed) {
                                     targetWindow.location.reload();
@@ -500,7 +652,6 @@
                         return;
                     }
                     
-                    // Intentar refrescar la ventana existente
                     targetWindow.location.reload();
                     timeRemaining = totalTime;
                     updateDisplay();
@@ -508,7 +659,6 @@
                     
                 } catch (error) {
                     console.log('Error al refrescar:', error);
-                    // Si hay error de CORS, intentar navegar de nuevo
                     try {
                         targetWindow.location.href = currentUrl + '?t=' + Date.now();
                         timeRemaining = totalTime;
@@ -521,7 +671,6 @@
                     }
                 }
             } else {
-                // No hay ventana, abrir una nueva
                 updateWindowStatus('Abriendo nueva ventana... 🔄');
                 if (openNewWindow()) {
                     updateWindowStatus('Nueva ventana abierta ✅');
@@ -532,21 +681,17 @@
         }
         
         function stopAutoRefresh() {
-            // Limpiar intervalos
             if (refreshInterval) clearInterval(refreshInterval);
             if (countdownInterval) clearInterval(countdownInterval);
             if (statusCheckInterval) clearInterval(statusCheckInterval);
             
-            // Cerrar ventana si está abierta
             if (targetWindow && !targetWindow.closed) {
                 targetWindow.close();
             }
             
-            // Volver a la pantalla inicial
             document.getElementById('inputSection').style.display = 'block';
             document.getElementById('statusSection').style.display = 'none';
             
-            // Limpiar estado
             timeRemaining = totalTime;
             isPaused = false;
             targetWindow = null;
