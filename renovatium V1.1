@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Refrescador de URL</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-orange: #ff6b35;
+            --secondary-pink: #ff5e78;
+            --light-pink: #ffb3c1;
+            --dark-orange: #e85d2b;
+            --bg-gradient: linear-gradient(135deg, #fff5f7 0%, #ffe8e8 50%, #fff4e6 100%);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+		
+		.urlmo {
+			text-align: center;
+			padding-top: 1.2%;
+		}
+		
+		.elmosoftware{
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			text-align: center;
+			text-decoration: none;		
+			color: orange;
+		}
+
+        .header-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(255, 107, 53, 0.15);
+            padding: 30px;
+            margin-bottom: 25px;
+            border: none;
+        }
+
+        .header-title {
+            background: linear-gradient(135deg, var(--primary-orange), var(--secondary-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-orange), var(--secondary-pink));
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 15px 20px;
+        }
+
+        .alert-custom {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe8cc 100%);
+            border: 2px solid var(--primary-orange);
+            border-radius: 12px;
+            color: #856404;
+        }
+
+        .form-control {
+            border: 2px solid #f0f0f0;
+            border-radius: 10px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 0.25rem rgba(255, 107, 53, 0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-orange), var(--secondary-pink));
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid var(--primary-orange);
+            color: var(--primary-orange);
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-orange);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, var(--primary-orange));
+            border: none;
+            color: white;
+            font-weight: 600;
+            border-radius: 10px;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--secondary-pink), #dc3545);
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #20c997, #17a2b8);
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .preset-badge {
+            background: white;
+            color: var(--primary-orange);
+            border: 2px solid var(--light-pink);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin: 5px;
+            font-weight: 600;
+        }
+
+        .preset-badge:hover {
+            background: linear-gradient(135deg, var(--primary-orange), var(--secondary-pink));
+            color: white;
+            border-color: var(--primary-orange);
+            transform: scale(1.05);
+        }
+
+        .human-mode-card {
+            background: linear-gradient(135deg, #fff5f7, #ffe8e8);
+            border: 3px solid var(--light-pink);
+        }
+
+        .timer-display {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-orange), var(--secondary-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .progress {
+            height: 20px;
+            border-radius: 10px;
+            background: #f0f0f0;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary-orange), var(--secondary-pink));
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        .progress-bar.human {
+            background: linear-gradient(90deg, #ffc107, var(--primary-orange));
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .status-badge.active {
+            background: linear-gradient(135deg, #20c997, #17a2b8);
+            color: white;
+        }
+
+        .status-badge.human {
+            background: linear-gradient(135deg, #ffc107, var(--primary-orange));
+            color: white;
+        }
+
+        .status-badge.closed {
+            background: linear-gradient(135deg, var(--secondary-pink), #dc3545);
+            color: white;
+        }
+
+        .info-box {
+            background: white;
+            border-left: 4px solid var(--primary-orange);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .url-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            border: 2px dashed var(--light-pink);
+        }
+
+        .icon-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-orange), var(--secondary-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .shadow-custom {
+            box-shadow: 0 10px 40px rgba(255, 107, 53, 0.15) !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container main-container">
+        <div class="header-card shadow-custom">
+            <div class="icon-circle">
+                <i class="fas fa-sync-alt"></i>
+            </div>
+            <h1 class="header-title">Auto-Refrescador de URL</h1>
+            <p class="text-center text-muted mb-0">
+                <i class="fas fa-magic"></i> Mantén tus páginas actualizadas automáticamente
+            </p>
+			<p class="urlmo"><a class="elmosoftware" href="https://elmosoftware.es/" target="_blank">(c) elmosoftware 2025.</a></p>
+        </div>
+
+        <div id="inputSection">
+            <div class="alert alert-custom" role="alert">
+                <i class="fas fa-info-circle"></i> <strong>Importante:</strong> Asegúrate de permitir pop-ups en tu navegador.
+            </div>
+
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <i class="fas fa-link"></i> Configuración de URL
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="urlInput" class="form-label fw-bold">
+                            <i class="fas fa-globe"></i> URL de la página
+                        </label>
+                        <input type="url" class="form-control" id="urlInput" placeholder="https://ejemplo.com" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-custom" id="normalModeCard">
+                <div class="card-header">
+                    <i class="fas fa-clock"></i> Configuración de Tiempo
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">⏱️ Refrescar cada:</label>
+                        </div>
+                        <div class="col-md-5">
+                            <input type="number" class="form-control" id="minutesInput" min="1" max="1440" value="20">
+                        </div>
+                        <div class="col-md-3">
+                            <span class="fw-bold text-muted">minutos</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold mb-3">
+                            <i class="fas fa-star"></i> Intervalos comunes:
+                        </label>
+                        <div>
+                            <span class="preset-badge" onclick="setMinutes(1)">1 min</span>
+                            <span class="preset-badge" onclick="setMinutes(5)">5 min</span>
+                            <span class="preset-badge" onclick="setMinutes(10)">10 min</span>
+                            <span class="preset-badge" onclick="setMinutes(15)">15 min</span>
+                            <span class="preset-badge" onclick="setMinutes(20)">20 min</span>
+                            <span class="preset-badge" onclick="setMinutes(30)">30 min</span>
+                            <span class="preset-badge" onclick="setMinutes(60)">1 hora</span>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button class="btn btn-warning btn-lg" onclick="toggleHumanMode()">
+                            <i class="fas fa-user"></i> Voy a ser más humano
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-custom human-mode-card d-none" id="humanModeCard">
+                <div class="card-header" style="background: linear-gradient(135deg, #ffc107, var(--primary-orange));">
+                    <i class="fas fa-dice"></i> Modo Aleatorio (Más Humano)
+                </div>
+                <div class="card-body">
+                    <div class="info-box">
+                        <i class="fas fa-lightbulb text-warning"></i> 
+                        <strong>El refresco será aleatorio</strong> entre dos intervalos para simular comportamiento humano
+                    </div>
+
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-arrow-down"></i> Mínimo:
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="minMinutes" min="1" max="1440" value="3">
+                                <span class="input-group-text">min</span>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <i class="fas fa-arrow-right fa-2x" style="color: var(--primary-orange);"></i>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-arrow-up"></i> Máximo:
+                            </label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="maxMinutes" min="1" max="1440" value="20">
+                                <span class="input-group-text">min</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-light mt-3 text-center">
+                        <small>
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Ejemplo:</strong> Entre 3 y 20 minutos = refrescará en 7 min, luego 15 min, luego 4 min, etc.
+                        </small>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <button class="btn btn-success btn-lg" onclick="toggleHumanMode()">
+                            <i class="fas fa-clock"></i> Volver a modo normal
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <button class="btn btn-primary btn-lg px-5" onclick="startAutoRefresh()">
+                    <i class="fas fa-rocket"></i> Comenzar Auto-Refresco
+                </button>
+            </div>
+        </div>
+
+        <div id="statusSection" class="d-none">
+            <div class="card shadow-custom">
+                <div class="card-body text-center">
+                    <span class="status-badge active pulse" id="statusBadge">
+                        <i class="fas fa-check-circle"></i> <span id="modeTitle">Auto-Refrescador Activo</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <i class="fas fa-cog"></i> Configuración Actual
+                </div>
+                <div class="card-body" id="settingsSummary"></div>
+            </div>
+
+            <div class="card shadow-custom human-mode-card d-none" id="humanIndicatorCard">
+                <div class="card-body text-center">
+                    <h5 class="mb-2">
+                        <i class="fas fa-dice"></i> Próximo refresco en: 
+                        <strong style="color: var(--primary-orange);" id="nextRefreshTime">--</strong> minutos
+                    </h5>
+                    <small class="text-muted">(Intervalo aleatorio)</small>
+                </div>
+            </div>
+
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <i class="fas fa-globe"></i> Página Monitoreada
+                </div>
+                <div class="card-body">
+                    <div class="url-display" id="currentUrl"></div>
+                </div>
+            </div>
+
+            <div class="card shadow-custom">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="fw-bold">
+                            <i class="fas fa-window-maximize"></i> Estado de la ventana:
+                        </span>
+                        <span class="status-badge active" id="windowStatusBadge">
+                            <span id="windowStatusText">Iniciando...</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-custom">
+                <div class="card-body">
+                    <div class="timer-display" id="timerDisplay">--:--</div>
+                    <div class="progress">
+                        <div class="progress-bar" id="progressFill" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-custom">
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6 col-md-3">
+                            <button class="btn btn-warning w-100" onclick="pauseAutoRefresh()" id="pauseBtn">
+                                <i class="fas fa-pause"></i> Pausar
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-3 d-none" id="resumeBtnCol">
+                            <button class="btn btn-success w-100" onclick="resumeAutoRefresh()" id="resumeBtn">
+                                <i class="fas fa-play"></i> Reanudar
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <button class="btn btn-danger w-100" onclick="stopAutoRefresh()">
+                                <i class="fas fa-stop"></i> Detener
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <button class="btn btn-primary w-100" onclick="refreshNow()">
+                                <i class="fas fa-sync-alt"></i> Refrescar
+                            </button>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <button class="btn btn-outline-primary w-100" onclick="openNewWindow()">
+                                <i class="fas fa-external-link-alt"></i> Nueva Ventana
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let refreshInterval, countdownInterval, statusCheckInterval;
+        let timeRemaining = 1200, totalTime = 1200;
+        let isPaused = false, humanMode = false;
+        let currentUrl = '', targetWindow = null;
+        let minMinutes = 3, maxMinutes = 20, nextRandomTime = 0;
+
+        function toggleHumanMode() {
+            humanMode = !humanMode;
+            document.getElementById('normalModeCard').classList.toggle('d-none');
+            document.getElementById('humanModeCard').classList.toggle('d-none');
+        }
+
+        function setMinutes(minutes) {
+            document.getElementById('minutesInput').value = minutes;
+        }
+
+        function getRandomMinutes(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function startAutoRefresh() {
+            const url = document.getElementById('urlInput').value.trim();
+            
+            if (!url) {
+                alert('Por favor, ingresa una URL válida');
+                return;
+            }
+            
+            try {
+                new URL(url);
+            } catch (e) {
+                alert('Por favor, ingresa una URL válida (debe incluir http:// o https://)');
+                return;
+            }
+            
+            if (humanMode) {
+                const minInput = parseInt(document.getElementById('minMinutes').value);
+                const maxInput = parseInt(document.getElementById('maxMinutes').value);
+                
+                if (!minInput || !maxInput || minInput < 1 || maxInput < 1) {
+                    alert('Por favor, ingresa valores válidos para el intervalo aleatorio');
+                    return;
+                }
+                
+                if (minInput >= maxInput) {
+                    alert('❌ Error: El valor mínimo debe ser menor que el valor máximo');
+                    return;
+                }
+                
+                minMinutes = minInput;
+                maxMinutes = maxInput;
+                nextRandomTime = getRandomMinutes(minMinutes, maxMinutes);
+                totalTime = nextRandomTime * 60;
+            } else {
+                const minutes = parseInt(document.getElementById('minutesInput').value);
+                if (!minutes || minutes < 1 || minutes > 1440) {
+                    alert('Por favor, ingresa un número válido de minutos (entre 1 y 1440)');
+                    return;
+                }
+                totalTime = minutes * 60;
+            }
+            
+            currentUrl = url;
+            timeRemaining = totalTime;
+            
+            if (!openNewWindow()) return;
+            
+            document.getElementById('inputSection').classList.add('d-none');
+            document.getElementById('statusSection').classList.remove('d-none');
+            document.getElementById('currentUrl').textContent = url;
+            
+            updateUI();
+            startTimer();
+            startStatusCheck();
+        }
+
+        function updateUI() {
+            const statusBadge = document.getElementById('statusBadge');
+            const progressFill = document.getElementById('progressFill');
+            const modeTitle = document.getElementById('modeTitle');
+            const humanCard = document.getElementById('humanIndicatorCard');
+            
+            if (humanMode) {
+                statusBadge.className = 'status-badge human pulse';
+                progressFill.classList.add('human');
+                modeTitle.innerHTML = '<i class="fas fa-user"></i> Modo Humano Activo';
+                humanCard.classList.remove('d-none');
+                document.getElementById('nextRefreshTime').textContent = nextRandomTime;
+                
+                document.getElementById('settingsSummary').innerHTML = `
+                    <div class="text-center">
+                        <p><strong>Intervalo Aleatorio:</strong> ${minMinutes} - ${maxMinutes} minutos</p>
+                        <p><strong>Próximo Refresco:</strong> ${nextRandomTime} minutos</p>
+                    </div>
+                `;
+            } else {
+                statusBadge.className = 'status-badge active pulse';
+                progressFill.classList.remove('human');
+                modeTitle.innerHTML = '<i class="fas fa-check-circle"></i> Auto-Refrescador Activo';
+                humanCard.classList.add('d-none');
+                
+                const minutes = Math.floor(totalTime / 60);
+                document.getElementById('settingsSummary').innerHTML = `
+                    <div class="text-center">
+                        <p><strong>Intervalo:</strong> ${minutes} minuto${minutes > 1 ? 's' : ''}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function openNewWindow() {
+            if (targetWindow && !targetWindow.closed) {
+                try { targetWindow.close(); } catch (e) {}
+            }
+            
+            targetWindow = window.open(currentUrl, 'autoRefresh_' + Date.now(), 
+                'width=1024,height=768,scrollbars=yes,resizable=yes');
+            
+            if (!targetWindow) {
+                alert('❌ No se pudo abrir la ventana. Permite pop-ups en tu navegador');
+                return false;
+            }
+            
+            document.getElementById('windowStatusText').textContent = 'Activa ✅';
+            return true;
+        }
+        
+        function startTimer() {
+            if (refreshInterval) clearInterval(refreshInterval);
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            isPaused = false;
+            
+            refreshInterval = setInterval(() => {
+                if (!isPaused) {
+                    refreshNow();
+                    if (humanMode) {
+                        nextRandomTime = getRandomMinutes(minMinutes, maxMinutes);
+                        totalTime = nextRandomTime * 60;
+                        timeRemaining = totalTime;
+                        document.getElementById('nextRefreshTime').textContent = nextRandomTime;
+                    }
+                }
+            }, totalTime * 1000);
+            
+            countdownInterval = setInterval(() => {
+                if (!isPaused) {
+                    timeRemaining = timeRemaining > 0 ? timeRemaining - 1 : totalTime;
+                    updateDisplay();
+                }
+            }, 1000);
+            
+            updateDisplay();
+        }
+        
+        function startStatusCheck() {
+            if (statusCheckInterval) clearInterval(statusCheckInterval);
+            statusCheckInterval = setInterval(() => {
+                if (targetWindow) {
+                    try {
+                        const status = targetWindow.closed ? 'Cerrada ⚠️' : 'Activa ✅';
+                        document.getElementById('windowStatusText').textContent = status;
+                    } catch (e) {}
+                }
+            }, 3000);
+        }
+        
+        function updateDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            document.getElementById('timerDisplay').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            const progress = ((totalTime - timeRemaining) / totalTime) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+        
+        function pauseAutoRefresh() {
+            isPaused = true;
+            document.getElementById('pauseBtn').parentElement.classList.add('d-none');
+            document.getElementById('resumeBtnCol').classList.remove('d-none');
+        }
+        
+        function resumeAutoRefresh() {
+            isPaused = false;
+            document.getElementById('pauseBtn').parentElement.classList.remove('d-none');
+            document.getElementById('resumeBtnCol').classList.add('d-none');
+        }
+        
+        function refreshNow() {
+            if (targetWindow) {
+                try {
+                    if (targetWindow.closed) {
+                        openNewWindow();
+                    } else {
+                        targetWindow.location.reload();
+                        timeRemaining = totalTime;
+                        updateDisplay();
+                    }
+                } catch (error) {
+                    try {
+                        targetWindow.location.href = currentUrl;
+                    } catch (e) {
+                        openNewWindow();
+                    }
+                }
+            } else {
+                openNewWindow();
+            }
+        }
+        
+        function stopAutoRefresh() {
+            if (refreshInterval) clearInterval(refreshInterval);
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (statusCheckInterval) clearInterval(statusCheckInterval);
+            
+            if (targetWindow && !targetWindow.closed) targetWindow.close();
+            
+            document.getElementById('inputSection').classList.remove('d-none');
+            document.getElementById('statusSection').classList.add('d-none');
+            
+            targetWindow = null;
+            isPaused = false;
+        }
+    </script>
+</body>
+</html>
